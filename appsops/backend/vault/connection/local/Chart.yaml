@@ -1,0 +1,6 @@
+apiVersion: v2
+name: backend-vault-connection-local
+description: Vault wiring (VaultConnection, VaultAuth, VaultStaticSecret) for the backend team, local environment
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

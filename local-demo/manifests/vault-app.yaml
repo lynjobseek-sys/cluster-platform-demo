@@ -1,0 +1,58 @@
+# Vault server in dev mode. Hub-only, single replica, in-memory storage.
+# The root token is hardcoded to "root" so vault-bootstrap.sh and the
+# vault-secrets-operator can authenticate without an unseal dance.
+#
+# DEV MODE IS INSECURE. See README warning. Do not port this Application
+# to a non-local cluster without swapping to standalone or HA + auto-unseal.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://helm.releases.hashicorp.com
+    chart: vault
+    targetRevision: 0.29.1
+    helm:
+      releaseName: vault
+      values: |
+        global:
+          tlsDisable: true
+        injector:
+          enabled: false
+        server:
+          dev:
+            enabled: true
+            devRootToken: "root"
+          standalone:
+            enabled: false
+          ha:
+            enabled: false
+          dataStorage:
+            enabled: false
+          auditStorage:
+            enabled: false
+          extraArgs: "-dev-listen-address=0.0.0.0:8200"
+          service:
+            enabled: true
+            type: ClusterIP
+            port: 8200
+          readinessProbe:
+            enabled: true
+            path: "/v1/sys/health?standbyok=true&uninitcode=204"
+          livenessProbe:
+            enabled: false
+  destination:
+    name: in-cluster
+    namespace: vault
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

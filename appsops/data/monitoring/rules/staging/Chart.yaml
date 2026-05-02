@@ -1,0 +1,6 @@
+apiVersion: v2
+name: data-monitoring-rules-staging
+description: PrometheusRule and Grafana dashboard for the data team, staging environment
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

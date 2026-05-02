@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: onboarding
+  namespace: gitops
+spec:
+  generators:
+    - list:
+        elements:
+          - name: hello
+  template:
+    metadata:
+      name: "{{ .name }}"
+    spec:
+      project: default
+      source:
+        repoURL: https://example.com/repo.git
+        targetRevision: HEAD
+        path: hello
+      destination:
+        name: in-cluster
+        namespace: hello

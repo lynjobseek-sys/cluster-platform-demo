@@ -1,0 +1,4 @@
+team: backend
+project: monitoring
+app: rules
+env: local

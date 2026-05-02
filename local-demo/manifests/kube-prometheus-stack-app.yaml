@@ -1,0 +1,94 @@
+# kube-prometheus-stack is platform infra, not a team app, so it bypasses
+# the simpleOnboarding ApplicationSet and is installed as a single hand
+# written ArgoCD Application targeting the hub cluster only.
+#
+# AlertManager is configured to route by the `team` label on alerts. Each
+# team's PrometheusRule (under appsops/<team>/monitoring/...) stamps that
+# label on every rule, which gives one routing entry point per team without
+# the AppProject needing any special privilege.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 65.1.0
+    helm:
+      releaseName: kube-prometheus-stack
+      values: |
+        # kind ships a single control-plane container with embedded etcd,
+        # kube-controller-manager, kube-scheduler and kube-proxy that the
+        # operator's default ServiceMonitors cannot scrape. Disabling them
+        # removes the well known false positive alert storm.
+        kubeControllerManager:
+          enabled: false
+        kubeScheduler:
+          enabled: false
+        kubeProxy:
+          enabled: false
+        kubeEtcd:
+          enabled: false
+
+        prometheus:
+          prometheusSpec:
+            # Allow PrometheusRules from any namespace so per-team rules
+            # under <team>-local / <team>-staging are picked up without a
+            # namespace selector per team.
+            ruleSelectorNilUsesHelmValues: false
+            ruleNamespaceSelector: {}
+            ruleSelector: {}
+            serviceMonitorSelectorNilUsesHelmValues: false
+            serviceMonitorNamespaceSelector: {}
+            serviceMonitorSelector: {}
+
+        grafana:
+          defaultDashboardsEnabled: true
+          sidecar:
+            dashboards:
+              enabled: true
+              label: grafana_dashboard
+              labelValue: "1"
+              # Pick up dashboard ConfigMaps from every namespace so each
+              # team can ship its own under <team>-local / <team>-staging.
+              searchNamespace: ALL
+
+        alertmanager:
+          config:
+            route:
+              receiver: default
+              group_by: ["alertname", "team"]
+              routes:
+                - matchers: ["team=frontend"]
+                  receiver: frontend-receiver
+                - matchers: ["team=backend"]
+                  receiver: backend-receiver
+                - matchers: ["team=data"]
+                  receiver: data-receiver
+            inhibit_rules:
+              - source_matchers: ["alertname=Watchdog"]
+                target_matchers: ["alertname=Watchdog"]
+                equal: ["alertname"]
+            receivers:
+              - name: default
+              - name: frontend-receiver
+              - name: backend-receiver
+              - name: data-receiver
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      # ServerSideApply + Replace handle the bundled CRDs which blow past
+      # the 256 KiB last-applied annotation limit on client-side apply.
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - Replace=true

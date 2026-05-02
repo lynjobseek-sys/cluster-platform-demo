@@ -1,0 +1,6 @@
+apiVersion: v2
+name: backend-monitoring-rules-local
+description: PrometheusRule and Grafana dashboard for the backend team, local environment
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

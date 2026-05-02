@@ -1,0 +1,4 @@
+team: frontend
+project: monitoring
+app: rules
+env: staging

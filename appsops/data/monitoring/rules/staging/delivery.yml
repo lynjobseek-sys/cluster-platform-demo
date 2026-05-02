@@ -1,0 +1,4 @@
+team: data
+project: monitoring
+app: rules
+env: staging

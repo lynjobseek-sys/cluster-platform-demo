@@ -1,0 +1,14 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: data-vault-auth
+  namespace: data-staging
+spec:
+  vaultConnectionRef: data-vault-connection
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: data-staging
+    serviceAccount: default
+    audiences:
+      - vault

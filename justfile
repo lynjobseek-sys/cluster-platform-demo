@@ -5,7 +5,8 @@ build:
     kcl run models/stacks -o manifests/main.yaml
 
 lint:
-    @echo "[lint] no policies yet (Phase 6)"
+    conftest verify --policy .policy
+    conftest test manifests/
 
 clean:
     rm -f manifests/main.yaml

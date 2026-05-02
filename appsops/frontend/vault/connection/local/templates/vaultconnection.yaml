@@ -1,0 +1,12 @@
+# VaultConnection lives in the team namespace, not in
+# vault-secrets-operator-system. VSO resolves vaultConnectionRef relative
+# to the VaultAuth's namespace, so each team owns its own connection
+# object and can be cordoned independently.
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultConnection
+metadata:
+  name: frontend-vault-connection
+  namespace: frontend-local
+spec:
+  address: http://vault.vault.svc.cluster.local:8200
+  skipTLSVerify: true

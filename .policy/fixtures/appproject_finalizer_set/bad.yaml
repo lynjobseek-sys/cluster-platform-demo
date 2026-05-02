@@ -1,0 +1,12 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: frontend
+  namespace: argocd
+spec:
+  description: AppProject for team frontend
+  sourceRepos:
+    - https://example.com/repo.git
+  destinations:
+    - server: "*"
+      namespace: frontend-*

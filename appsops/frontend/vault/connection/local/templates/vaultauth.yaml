@@ -1,0 +1,14 @@
+apiVersion: secrets.hashicorp.com/v1beta1
+kind: VaultAuth
+metadata:
+  name: frontend-vault-auth
+  namespace: frontend-local
+spec:
+  vaultConnectionRef: frontend-vault-connection
+  method: kubernetes
+  mount: kubernetes
+  kubernetes:
+    role: frontend-local
+    serviceAccount: default
+    audiences:
+      - vault
