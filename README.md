@@ -4,6 +4,10 @@ Reference implementation of a hub-and-spoke ArgoCD platform with KCL-driven mani
 
 > Status: scaffolding. See [Phases](#phases) for what works today.
 
+## Vault dev mode
+
+> WARNING: Dev mode only. The hub runs Vault with an in-memory backend and a hardcoded root token of `root`. Everything is wiped on Pod restart and there is no TLS. Do not run this configuration outside a throwaway local cluster, and never expose port 8200 beyond the kind network.
+
 ## Quickstart
 
 ```bash
@@ -45,7 +49,7 @@ kcl.mod                 KCL package manifest
 - [x] 5 — full team rollout (frontend / backend / data)
 - [x] 6 — OPA policies (conftest + just lint)
 - [x] 7 — monitoring (kube-prometheus-stack + per-team rules)
-- [ ] 8 — Vault (server + operator + per-team KV)
+- [x] 8 — Vault (server + operator + per-team KV)
 - [ ] 9 — README + architecture diagram + demo gif
 
 ## License
