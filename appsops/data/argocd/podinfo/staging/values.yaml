@@ -1,0 +1,9 @@
+podinfo:
+  replicaCount: 2
+  ingress:
+    enabled: false
+  serviceMonitor:
+    enabled: false
+  ui:
+    color: "#5a5a8c"
+    message: "data / staging"

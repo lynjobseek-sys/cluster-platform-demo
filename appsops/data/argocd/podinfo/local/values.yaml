@@ -1,0 +1,9 @@
+podinfo:
+  replicaCount: 1
+  ingress:
+    enabled: false
+  serviceMonitor:
+    enabled: false
+  ui:
+    color: "#4a4a7c"
+    message: "data / local"

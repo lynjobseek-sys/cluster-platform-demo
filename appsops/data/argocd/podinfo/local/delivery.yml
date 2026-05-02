@@ -1,0 +1,4 @@
+team: data
+project: argocd
+app: podinfo
+env: local
