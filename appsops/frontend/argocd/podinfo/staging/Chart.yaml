@@ -1,0 +1,10 @@
+apiVersion: v2
+name: frontend-podinfo-staging
+description: podinfo for the frontend team, staging environment
+type: application
+version: 0.1.0
+appVersion: "6.7.1"
+dependencies:
+  - name: podinfo
+    version: "6.7.1"
+    repository: "https://stefanprodan.github.io/podinfo"

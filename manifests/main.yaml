@@ -1,0 +1,56 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: frontend
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: AppProject for team frontend
+  sourceRepos:
+    - https://github.com/lynjobseek-sys/cluster-platform-demo.git
+  destinations:
+    - server: "*"
+      namespace: frontend-*
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: argocd-onboarding
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/lynjobseek-sys/cluster-platform-demo.git
+        revision: HEAD
+        directories:
+          - path: "appsops/*/argocd/*/*"
+  template:
+    metadata:
+      name: "{{ index .path.segments 1 }}-{{ index .path.segments 3 }}-{{ index .path.segments 4 }}"
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: "{{ index .path.segments 1 }}"
+      source:
+        repoURL: https://github.com/lynjobseek-sys/cluster-platform-demo.git
+        targetRevision: HEAD
+        path: "{{ .path.path }}"
+      destination:
+        name: '{{ get (dict "local" "in-cluster" "staging" "dev" "prod" "prod") (index .path.segments 4) }}'
+        namespace: "{{ index .path.segments 1 }}-{{ index .path.segments 4 }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+          - ServerSideApply=true

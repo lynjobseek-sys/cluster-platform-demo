@@ -1,0 +1,9 @@
+podinfo:
+  replicaCount: 2
+  ingress:
+    enabled: false
+  serviceMonitor:
+    enabled: false
+  ui:
+    color: "#5b8a44"
+    message: "frontend / staging"

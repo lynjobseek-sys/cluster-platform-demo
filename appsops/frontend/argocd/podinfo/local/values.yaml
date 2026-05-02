@@ -1,0 +1,9 @@
+podinfo:
+  replicaCount: 1
+  ingress:
+    enabled: false
+  serviceMonitor:
+    enabled: false
+  ui:
+    color: "#34577c"
+    message: "frontend / local"

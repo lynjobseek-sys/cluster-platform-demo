@@ -41,7 +41,7 @@ kcl.mod                 KCL package manifest
 - [x] 1 — scaffolding
 - [x] 2 — hub-only ArgoCD
 - [x] 3 — spokes (dev + prod)
-- [ ] 4 — simpleOnboarding (KCL ApplicationSet)
+- [x] 4 — simpleOnboarding (KCL ApplicationSet)
 - [ ] 5 — full team rollout (frontend / backend / data)
 - [ ] 6 — OPA policies (conftest + just lint)
 - [ ] 7 — monitoring (kube-prometheus-stack + per-team rules)
