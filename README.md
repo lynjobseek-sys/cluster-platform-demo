@@ -44,7 +44,7 @@ kcl.mod                 KCL package manifest
 - [x] 4 — simpleOnboarding (KCL ApplicationSet)
 - [x] 5 — full team rollout (frontend / backend / data)
 - [x] 6 — OPA policies (conftest + just lint)
-- [ ] 7 — monitoring (kube-prometheus-stack + per-team rules)
+- [x] 7 — monitoring (kube-prometheus-stack + per-team rules)
 - [ ] 8 — Vault (server + operator + per-team KV)
 - [ ] 9 — README + architecture diagram + demo gif
 

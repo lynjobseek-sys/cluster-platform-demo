@@ -89,7 +89,17 @@ register_spoke prod
 #    simpleOnboarding ApplicationSet for every project in ManagedProjects).
 kctl apply -f ../manifests/main.yaml
 
-echo "[bootstrap] hub + spokes ready. Initial admin password:"
+# 5. kube-prometheus-stack on the hub. Platform infra, hand-written
+#    Application rather than ApplicationSet output. Per-team rules and
+#    dashboards arrive via the monitoring-onboarding ApplicationSet above.
+kctl apply -f manifests/kube-prometheus-stack-app.yaml
+kctl -n "$ARGOCD_NS" wait --for=condition=Available=true \
+  --timeout=10m application/kube-prometheus-stack || true
+kctl -n monitoring rollout status statefulset/prometheus-kube-prometheus-stack-prometheus --timeout 5m || true
+kctl -n monitoring rollout status statefulset/alertmanager-kube-prometheus-stack-alertmanager --timeout 5m || true
+kctl -n monitoring rollout status deployment/kube-prometheus-stack-grafana --timeout 5m || true
+
+echo "[bootstrap] hub + spokes + monitoring ready. Initial ArgoCD admin password:"
 kctl -n "$ARGOCD_NS" get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d
 echo
