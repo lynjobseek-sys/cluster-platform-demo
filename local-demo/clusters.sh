@@ -14,9 +14,11 @@ ensure_cluster() {
   fi
 }
 
-ensure_cluster hub kind/hub.yaml
+ensure_cluster hub  kind/hub.yaml
+ensure_cluster dev  kind/dev.yaml
+ensure_cluster prod kind/prod.yaml
 
-# Phase 3 will add 'dev' and 'prod' here.
-
-echo "[clusters] hub ready"
-kubectl --context kind-hub cluster-info
+echo "[clusters] all 3 clusters ready"
+for ctx in kind-hub kind-dev kind-prod; do
+  kubectl --context "$ctx" cluster-info | head -1
+done

@@ -11,7 +11,7 @@ ARGOCD_VERSION="${ARGOCD_VERSION:-7.6.12}"   # Helm chart version that ships Arg
 
 kctl() { kubectl --context "$HUB_CTX" "$@"; }
 
-# 1. Install ArgoCD via Helm. Idempotent: helm upgrade --install.
+# 1. Install ArgoCD via Helm. Idempotent.
 helm repo add argo https://argoproj.github.io/argo-helm >/dev/null 2>&1 || true
 helm repo update argo >/dev/null
 
@@ -24,24 +24,71 @@ helm upgrade --install argocd argo/argo-cd \
   --set applicationSet.enabled=true \
   --wait --timeout 5m
 
-# 2. Patch the ApplicationSet controller ClusterRole (appprojects list/watch).
+# 2. Patch the ApplicationSet ClusterRole and the cmd-params ConfigMap.
 kctl apply -f manifests/applicationset-clusterrole-patch.yaml
-
-# 3. Patch argocd-cmd-params-cm: server-side diff + enable git generators.
 kctl apply -f manifests/argocd-cmd-params-cm.yaml
 
-# 4. Restart the controllers so they pick up the patched ConfigMap.
 kctl -n "$ARGOCD_NS" rollout restart \
   statefulset/argocd-application-controller \
   deployment/argocd-applicationset-controller
-
 kctl -n "$ARGOCD_NS" rollout status statefulset/argocd-application-controller --timeout 3m
 kctl -n "$ARGOCD_NS" rollout status deployment/argocd-applicationset-controller --timeout 3m
 
-# 5. Apply the single demo Application (Phase 2 sanity check).
+# 3. Register the spokes as ArgoCD cluster Secrets.
+#
+# Direct kubectl is intentional. The argocd CLI's cluster add path goes
+# through the gRPC API and is unreliable on macOS + kind. Writing the
+# Secret directly removes that hop.
+#
+# kind get kubeconfig --internal returns the API server address as the
+# kind container hostname rather than 127.0.0.1, so the hub container can
+# reach the spoke container over Docker's user-defined network.
+register_spoke() {
+  local name="$1"
+  local tmp; tmp=$(mktemp)
+  kind get kubeconfig --name "$name" --internal > "$tmp"
+
+  local kc_json server ca_data cert_data key_data
+  kc_json=$(KUBECONFIG="$tmp" kubectl config view --raw --minify -o json)
+  rm -f "$tmp"
+
+  server=$(echo "$kc_json"   | jq -r '.clusters[0].cluster.server')
+  ca_data=$(echo "$kc_json"  | jq -r '.clusters[0].cluster["certificate-authority-data"]')
+  cert_data=$(echo "$kc_json" | jq -r '.users[0].user["client-certificate-data"]')
+  key_data=$(echo "$kc_json"  | jq -r '.users[0].user["client-key-data"]')
+
+  kctl apply -f - <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cluster-${name}
+  namespace: ${ARGOCD_NS}
+  labels:
+    argocd.argoproj.io/secret-type: cluster
+    cluster.platform/env: ${name}
+type: Opaque
+stringData:
+  name: ${name}
+  server: ${server}
+  config: |
+    {
+      "tlsClientConfig": {
+        "caData": "${ca_data}",
+        "certData": "${cert_data}",
+        "keyData": "${key_data}"
+      }
+    }
+EOF
+  echo "[bootstrap] registered spoke: ${name} (${server})"
+}
+
+register_spoke dev
+register_spoke prod
+
+# 4. Apply the multi-cluster demo ApplicationSet (Phase 3 sanity check).
 kctl apply -f manifests/demo-app.yaml
 
-echo "[bootstrap] hub ArgoCD ready. Initial admin password:"
+echo "[bootstrap] hub + spokes ready. Initial admin password:"
 kctl -n "$ARGOCD_NS" get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d
 echo
