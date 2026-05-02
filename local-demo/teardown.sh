@@ -1,3 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
-echo "[teardown] Phase 1 stub. Real teardown arrives Phase 2."
+
+for c in hub dev prod; do
+  if kind get clusters 2>/dev/null | grep -qx "$c"; then
+    echo "[teardown] deleting kind cluster '$c'"
+    kind delete cluster --name "$c"
+  fi
+done
+
+echo "[teardown] done"

@@ -6,7 +6,17 @@ Reference implementation of a hub-and-spoke ArgoCD platform with KCL-driven mani
 
 ## Quickstart
 
-_(populated in Phase 2)_
+```bash
+# Prereqs: docker, kind, kubectl, helm, jq. macOS: `brew install ...`
+# Get a GitHub PAT with `repo` scope (used by ArgoCD to read this repo from Phase 4 onward).
+export GITHUB_TOKEN=<your-pat>
+
+just up      # setup -> clusters -> bootstrap -> verify
+# ArgoCD UI: kubectl --context kind-hub port-forward -n argocd svc/argocd-server 8080:443
+# Username admin, password printed by bootstrap.sh
+
+just down    # tears down all kind clusters
+```
 
 ## Architecture
 
@@ -29,7 +39,7 @@ kcl.mod                 KCL package manifest
 ## Phases
 
 - [x] 1 — scaffolding
-- [ ] 2 — hub-only ArgoCD
+- [x] 2 — hub-only ArgoCD
 - [ ] 3 — spokes (dev + prod)
 - [ ] 4 — simpleOnboarding (KCL ApplicationSet)
 - [ ] 5 — full team rollout (frontend / backend / data)
