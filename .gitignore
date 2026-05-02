@@ -1,0 +1,6 @@
+.kcl/
+*.tar
+.DS_Store
+local-demo/.tmp/
+INTERVIEW_NOTES.md
+**/kcl.mod.lock.local
