@@ -99,7 +99,24 @@ kctl -n monitoring rollout status statefulset/prometheus-kube-prometheus-stack-p
 kctl -n monitoring rollout status statefulset/alertmanager-kube-prometheus-stack-alertmanager --timeout 5m || true
 kctl -n monitoring rollout status deployment/kube-prometheus-stack-grafana --timeout 5m || true
 
-echo "[bootstrap] hub + spokes + monitoring ready. Initial ArgoCD admin password:"
+# 6. Vault server in dev mode + vault-secrets-operator. Hub-only.
+kctl apply -f manifests/vault-app.yaml
+kctl apply -f manifests/vault-secrets-operator-app.yaml
+
+kctl wait --for=condition=Available --timeout=5m \
+  -n "$ARGOCD_NS" application/vault || true
+kctl -n vault rollout status statefulset/vault --timeout 5m
+kctl -n vault wait --for=condition=Ready pod/vault-0 --timeout 3m
+
+kctl wait --for=condition=Available --timeout=5m \
+  -n "$ARGOCD_NS" application/vault-secrets-operator || true
+kctl -n vault-secrets-operator-system rollout status \
+  deployment/vault-secrets-operator-controller-manager --timeout 5m
+
+# 7. Imperative Vault seed: per-team policies, k8s auth roles, KV secrets.
+HUB_CTX="$HUB_CTX" source manifests/vault-bootstrap.sh
+
+echo "[bootstrap] hub + spokes + monitoring + vault ready. Initial ArgoCD admin password:"
 kctl -n "$ARGOCD_NS" get secret argocd-initial-admin-secret \
   -o jsonpath='{.data.password}' | base64 -d
 echo
